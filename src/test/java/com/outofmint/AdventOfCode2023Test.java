@@ -157,4 +157,68 @@ public class AdventOfCode2023Test {
             default -> number;
         };
     }
+
+    public static Stream<Arguments> test_day2() {
+        return Stream.of(
+                Arguments.of("/2023/day2-example.txt", 12, 13, 14, 8, 2286),
+                Arguments.of("/2023/day2.txt", 12, 13, 14, 2169, 60948)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void test_day2(String inputResource, int numRed, int numGreen, int numBlue, int exGameIdChecksum, int exPowerOfCubesChecksum) {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputResource))))) {
+            String line;
+            int gameIdChecksum = 0;
+            int powerOfCubesChecksum = 0;
+            while ((line = r.readLine()) != null) {
+                String[] game = line.split(": ");
+                int gameId = Integer.parseInt(game[0].replace("Game ", ""));
+                String[] sets = game[1].split("; ");
+                int maxRed = 0;
+                int maxGreen = 0;
+                int maxBlue = 0;
+                for (String set : sets) {
+                    String[] colors = set.split(", ");
+                    int red = 0;
+                    int green = 0;
+                    int blue = 0;
+                    for (String color : colors) {
+                        String[] colorParts = color.split(" ");
+                        switch (colorParts[1]) {
+                            case "red" -> red = Integer.parseInt(colorParts[0]);
+                            case "green" -> green = Integer.parseInt(colorParts[0]);
+                            case "blue" -> blue = Integer.parseInt(colorParts[0]);
+                            default -> throw new RuntimeException("unknown color");
+                        }
+                    }
+                    maxRed = Math.max(red, maxRed);
+                    maxGreen = Math.max(green, maxGreen);
+                    maxBlue = Math.max(blue, maxBlue);
+                }
+                boolean possible = maxRed <= numRed && maxGreen <= numGreen && maxBlue <= numBlue;
+                log.info("{}", line);
+                log.info("  max: {} red, {} green, {} blue -> {}", highlightIfGreater(maxRed, numRed), highlightIfGreater(maxGreen, numGreen), highlightIfGreater(maxBlue, numBlue), possible ? "possible" : highlight("impossible"));
+                if (possible) {
+                    gameIdChecksum += gameId;
+                }
+                powerOfCubesChecksum += (maxRed * maxGreen * maxBlue);
+            }
+            log.info("power of cubes checksum: {}", powerOfCubesChecksum);
+            assertEquals(exGameIdChecksum, gameIdChecksum);
+            assertEquals(exPowerOfCubesChecksum, powerOfCubesChecksum);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String highlightIfGreater(int current, int allowedMax) {
+        return current > allowedMax ? highlight(Integer.toString(current).concat(" (> ").concat(Integer.toString(allowedMax)).concat(")")) : Integer.toString(current);
+    }
+
+    private static String highlight(String text) {
+        return ANSI_RED.concat(text).concat(ANSI_RESET);
+    }
 }

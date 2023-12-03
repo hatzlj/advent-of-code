@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -206,7 +208,6 @@ public class AdventOfCode2023Test {
                 }
                 powerOfCubesChecksum += (maxRed * maxGreen * maxBlue);
             }
-            log.info("power of cubes checksum: {}", powerOfCubesChecksum);
             assertEquals(exGameIdChecksum, gameIdChecksum);
             assertEquals(exPowerOfCubesChecksum, powerOfCubesChecksum);
         } catch (IOException e) {
@@ -220,5 +221,79 @@ public class AdventOfCode2023Test {
 
     private static String highlight(String text) {
         return ANSI_RED.concat(text).concat(ANSI_RESET);
+    }
+
+    public static Stream<Arguments> test_day3() {
+        return Stream.of(
+                Arguments.of("/2023/day3-example.txt", 4361, 467835),
+                Arguments.of("/2023/day3.txt", 520019, 75519888)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void test_day3(String inputResource, int exPartNumbersSum, int exGearRatioSum) {
+        Pattern symbol = Pattern.compile("[@#$%&*+=\\-/]");
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputResource))))) {
+            String previous = null;
+            String current = null;
+            String next;
+            int partNumbersSum = 0;
+            int gearRatioSum = 0;
+            do {
+                next = r.readLine();
+                if (current != null) {
+                    Matcher symbolMatcher = symbol.matcher(current);
+                    List<Integer> prevLineNumbers = List.of();
+                    List<Integer> curLineNumbers = List.of();
+                    List<Integer> nextLineNumbers = List.of();
+                    while (symbolMatcher.find()) {
+                        int symbolPos = symbolMatcher.start();
+                        if (previous != null) {
+                            prevLineNumbers = extractAdjacentPartNumbers(previous, symbolPos);
+                            partNumbersSum += prevLineNumbers.stream()
+                                    .mapToInt(a -> a)
+                                    .sum();
+                        }
+                        curLineNumbers = extractAdjacentPartNumbers(current, symbolPos);
+                        partNumbersSum += curLineNumbers.stream()
+                                .mapToInt(a -> a)
+                                .sum();
+                        if (next != null) {
+                            nextLineNumbers = extractAdjacentPartNumbers(next, symbolPos);
+                            partNumbersSum += nextLineNumbers.stream()
+                                    .mapToInt(a -> a)
+                                    .sum();
+                        }
+                        List<Integer> adjacentPartNumbers = new ArrayList<>();
+                        adjacentPartNumbers.addAll(prevLineNumbers);
+                        adjacentPartNumbers.addAll(curLineNumbers);
+                        adjacentPartNumbers.addAll(nextLineNumbers);
+                        if ("*".equals(symbolMatcher.group()) && adjacentPartNumbers.size() == 2) {
+                            gearRatioSum += adjacentPartNumbers.get(0) * adjacentPartNumbers.get(1);
+                        }
+                    }
+                }
+                previous = current;
+                current = next;
+            } while (current != null);
+            assertEquals(exPartNumbersSum, partNumbersSum);
+            assertEquals(exGearRatioSum, gearRatioSum);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static List<Integer> extractAdjacentPartNumbers(String line, int symbolPos) {
+        Pattern number = Pattern.compile("\\d+");
+        List<Integer> adjacentPartNumbers = new ArrayList<>();
+        Matcher prevNumberMatcher = number.matcher(line);
+        while (prevNumberMatcher.find()) {
+            if (symbolPos >= (prevNumberMatcher.start()) - 1 && symbolPos <= (prevNumberMatcher.end())) {
+                adjacentPartNumbers.add(Integer.parseInt(prevNumberMatcher.group()));
+            }
+        }
+        return adjacentPartNumbers;
     }
 }

@@ -10,10 +10,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -295,5 +299,80 @@ public class AdventOfCode2023Test {
             }
         }
         return adjacentPartNumbers;
+    }
+
+    public static Stream<Arguments> test_day4() {
+        return Stream.of(
+                Arguments.of("/2023/day4-example.txt", 13, 30),
+                Arguments.of("/2023/day4.txt", 22193, 5625994)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void test_day4(String inputResource, int exCardPointSum, int exTotalNumScratchcards) {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputResource))))) {
+            String line;
+            int cardPointSum = 0;
+            Map<Integer, Integer> copies = new HashMap<>();
+            int currentCard = 0;
+            while ((line = r.readLine()) != null) {
+                final String[] card = line.split(": ");
+                final String[] numbers = card[1].split(" \\| ");
+                final Set<String> winningNumbers = Set.of(
+                        numbers[0].trim().split(" +(?=\\d)")
+                );
+                final Set<String> myNumbers = Set.of(
+                        numbers[1].trim().split(" +(?=\\d)")
+                );
+                final Set<String> matching = myNumbers.stream()
+                        .filter(winningNumbers::contains)
+                        .collect(Collectors.toUnmodifiableSet());
+
+                final long matches = matching.size();
+                cardPointSum += ((int) Math.pow(2, (matches - 1)));
+
+                copies.put(currentCard, (copies.getOrDefault(currentCard, 0) + 1));
+
+                String outputLine = card[0]
+                        .concat(": ")
+                        .concat(winningNumbers.stream()
+                                .mapToInt(Integer::parseInt)
+                                .sorted()
+                                .mapToObj(Integer::toString)
+                                .map(s -> String.format("%1$2s", s))
+                                .collect(Collectors.joining(" ")))
+                        .concat(" | ")
+                        .concat(myNumbers.stream()
+                                .mapToInt(Integer::parseInt)
+                                .sorted()
+                                .mapToObj(Integer::toString)
+                                .map(s -> String.format("%1$2s", s))
+                                .collect(Collectors.joining(" ")))
+                        .concat(" => ")
+                        .concat(Integer.toString(copies.get(currentCard)))
+                        .concat(" copies");
+                for (String m : matching) {
+                    outputLine = outputLine.replaceAll("(?<=\\s)+" + m + "((?=\\s+)|(?=$))", highlight(m));
+                }
+                log.info("{}", outputLine);
+                log.debug("  {}", line);
+
+                log.debug("  current card total: {}", copies.get(currentCard));
+
+                for (int i = currentCard + 1; i <= currentCard + matches; i++) {
+                    copies.put(i, (copies.getOrDefault(i, 0) + copies.get(currentCard)));
+                    log.debug("  upcoming card {} total: {}", i, copies.get(i));
+                }
+                currentCard++;
+
+                log.debug("");
+            }
+            assertEquals(exCardPointSum, cardPointSum);
+            assertEquals(exTotalNumScratchcards, copies.values().stream().mapToInt(i -> i).sum());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

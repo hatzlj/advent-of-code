@@ -9,7 +9,10 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -374,5 +377,111 @@ public class AdventOfCode2023Test {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static Stream<Arguments> test_day5() {
+        return Stream.of(
+                Arguments.of("/2023/day5-example.txt", 35),
+                Arguments.of("/2023/day5.txt", 227653707)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("test_day5")
+    public void test_day5_part1(String inputResource, int exMinLocation) {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputResource))))) {
+            String line;
+            List<Long> seeds = null;
+            Map<String, List<Long[]>> mappings = new HashMap<>();
+            while ((line = r.readLine()) != null) {
+                if (!line.isBlank())
+                    // handle section header
+                    if (line.contains(":")) {
+                        final String section = line.split(":\\s*")[0];
+                        switch (section) {
+                            case "seeds":
+                                seeds = Stream.of(line.split(":\\s*")[1].trim().split("\\s"))
+                                        .map(Long::parseLong)
+                                        .toList();
+                                break;
+                            case "seed-to-soil map":
+                            case "soil-to-fertilizer map":
+                            case "fertilizer-to-water map":
+                            case "water-to-light map":
+                            case "light-to-temperature map":
+                            case "temperature-to-humidity map":
+                            case "humidity-to-location map":
+                                handleMapping(mappings, section, r);
+                                break;
+                            default:
+                                throw new RuntimeException("unknown section " + section);
+                        }
+                    }
+            }
+            long minLocation = Long.MAX_VALUE;
+            long numSeeds = seeds.size();
+            log.info("expected seed mappings: {}", numSeeds);
+            long sc = 1;
+            Instant start = Instant.now();
+            for (long seed : seeds) {
+                final Long soil = mapToDestination(seed, mappings.get("seed-to-soil map"));
+                final Long fertilizer = mapToDestination(soil, mappings.get("soil-to-fertilizer map"));
+                final Long water = mapToDestination(fertilizer, mappings.get("fertilizer-to-water map"));
+                final Long light = mapToDestination(water, mappings.get("water-to-light map"));
+                final Long temp = mapToDestination(light, mappings.get("light-to-temperature map"));
+                final Long humidity = mapToDestination(temp, mappings.get("temperature-to-humidity map"));
+                long location = mapToDestination(humidity, mappings.get("humidity-to-location map"));
+                minLocation = Math.min(minLocation, location);
+
+                final Duration elapsed = Duration.between(start, Instant.now());
+                final double progress = (((double) sc++) / numSeeds) * 100;
+                final Duration ttc =
+                        Duration.ofMillis(Math.round((((double) elapsed.toMillis()) / progress) * (100 - progress)));
+                log.info("seed {} ===> location {}, {}%, elapsed {}s, ttc {}s", seed, location, String.format("%" +
+                        ".0f", progress), elapsed, ttc);
+            }
+            assertEquals(exMinLocation, minLocation);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void handleMapping(Map<String, List<Long[]>> mappings, String section, BufferedReader r) throws IOException {
+        String line;
+        final List<Long[]> ranges = new ArrayList<>();
+        while ((line = r.readLine()) != null && !line.isBlank()) {
+            long destinationRangeStart = Long.parseLong(line.split("\\s")[0]);
+            long sourceRangeStart = Long.parseLong(line.split("\\s")[1]);
+            long rangeLength = Long.parseLong(line.split("\\s")[2]);
+            ranges.add(new Long[]
+                    {destinationRangeStart, sourceRangeStart, rangeLength}
+            );
+        }
+        mappings.put(section, ranges);
+    }
+
+    private static Long mapToDestination(long sourceValue, List<Long[]> mappings) {
+        // sort by source range start
+        List<Long[]> sortedMappings = mappings.stream().sorted(Comparator.comparing(r -> r[1])).toList();
+        Long destinationValue = null;
+        for (Long[] range : sortedMappings) {
+            long sourceRangeStart = range[1];
+            long sourceRangeEnd = range[1] + range[2];
+            long destinationOffset = range[0] - range[1];
+            if (sourceValue < sourceRangeStart) {
+                destinationValue = sourceValue;
+                break;
+            } else {
+                if (sourceValue < sourceRangeEnd) {
+                    destinationValue = sourceValue + destinationOffset;
+                    break;
+                }
+            }
+        }
+        if (destinationValue == null) {
+            destinationValue = sourceValue;
+        }
+        return destinationValue;
     }
 }

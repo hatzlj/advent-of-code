@@ -28,7 +28,7 @@ public class AdventOfCode2024Test {
     @MethodSource
     public void test_day1Part1(final String inputSource, final int exAbsoluteDistance) {
         try (BufferedReader r = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputSource))))) {
+                Objects.requireNonNull(AdventOfCode2024Test.class.getResourceAsStream(inputSource))))) {
             String line;
             List<Integer> list1 = new LinkedList<>();
             List<Integer> list2 = new LinkedList<>();
@@ -60,7 +60,7 @@ public class AdventOfCode2024Test {
     @MethodSource
     public void test_day1Part2(final String inputSource, final int exSimilarityScore) {
         try (BufferedReader r = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputSource))))) {
+                Objects.requireNonNull(AdventOfCode2024Test.class.getResourceAsStream(inputSource))))) {
             String line;
             List<Integer> numbers = new LinkedList<>();
             Map<Integer, Integer> frequency = new HashMap<>();
@@ -89,7 +89,7 @@ public class AdventOfCode2024Test {
     @MethodSource
     public void test_day2Part1(final String inputSource, final int exValidReports) {
         try (BufferedReader r = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputSource))))) {
+                Objects.requireNonNull(AdventOfCode2024Test.class.getResourceAsStream(inputSource))))) {
             String line;
             int validReports = 0;
             while ((line = r.readLine()) != null) {
@@ -129,7 +129,7 @@ public class AdventOfCode2024Test {
     @MethodSource
     public void test_day2Part2(final String inputSource, final int exValidReports) {
         try (BufferedReader r = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputSource))))) {
+                Objects.requireNonNull(AdventOfCode2024Test.class.getResourceAsStream(inputSource))))) {
             String line;
             int validReports = 0;
             while ((line = r.readLine()) != null) {
@@ -185,7 +185,7 @@ public class AdventOfCode2024Test {
     public void test_day3Part1(final String inputSource, final int exMulSum) {
         final Pattern mulPattern = Pattern.compile("mul\\(\\d+\\,\\d+\\)");
         try (BufferedReader r = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputSource))))) {
+                Objects.requireNonNull(AdventOfCode2024Test.class.getResourceAsStream(inputSource))))) {
             String line;
             int acMulSum = 0;
             while ((line = r.readLine()) != null) {
@@ -216,7 +216,7 @@ public class AdventOfCode2024Test {
     public void test_day3Part2(final String inputSource, final int exMulSum) {
         final Pattern expressionPattern = Pattern.compile("(mul\\(\\d+\\,\\d+\\))|(don't\\(\\))|(do\\(\\))");
         try (BufferedReader r = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputSource))))) {
+                Objects.requireNonNull(AdventOfCode2024Test.class.getResourceAsStream(inputSource))))) {
             String line;
             int acMulSum = 0;
             boolean doIt = true;

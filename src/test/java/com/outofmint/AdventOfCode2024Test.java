@@ -41,7 +41,7 @@ public class AdventOfCode2024Test {
             for (int i = 0; i < sorted1.size(); i++) {
                 absoluteDistance += Math.abs(sorted1.get(i) - sorted2.get(i));
             }
-            assertEquals(absoluteDistance, exAbsoluteDistance);
+            assertEquals(exAbsoluteDistance, exAbsoluteDistance);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -70,7 +70,7 @@ public class AdventOfCode2024Test {
             int similarityScore = numbers.stream()
                     .mapToInt(n -> n * frequency.getOrDefault(n, 0))
                     .sum();
-            assertEquals(similarityScore, exSimilarityScore);
+            assertEquals(exSimilarityScore, similarityScore);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

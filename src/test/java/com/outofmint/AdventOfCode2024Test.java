@@ -10,6 +10,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -175,6 +177,86 @@ public class AdventOfCode2024Test {
         return Stream.of(
                 Arguments.of("/2024/day2-example.txt", 4),
                 Arguments.of("/2024/day2-input.txt", 301)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void test_day3Part1(final String inputSource, final int exMulSum) {
+        final Pattern mulPattern = Pattern.compile("mul\\(\\d+\\,\\d+\\)");
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputSource))))) {
+            String line;
+            int acMulSum = 0;
+            while ((line = r.readLine()) != null) {
+                Matcher mulMatcher = mulPattern.matcher(line);
+                while (mulMatcher.find()) {
+                    String mulEx = mulMatcher.group()
+                            .replaceAll("mul\\(", "")
+                            .replaceAll("\\)", "");
+                    Integer[] operands = Arrays.stream(mulEx.split(",")).map(Integer::parseInt).toArray(Integer[]::new);
+                    acMulSum += operands[0] * operands[1];
+                }
+            }
+            assertEquals(exMulSum, acMulSum);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Stream<Arguments> test_day3Part1() {
+        return Stream.of(
+                Arguments.of("/2024/day3-example.txt", 161),
+                Arguments.of("/2024/day3-input.txt", 175615763)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void test_day3Part2(final String inputSource, final int exMulSum) {
+        final Pattern expressionPattern = Pattern.compile("(mul\\(\\d+\\,\\d+\\))|(don't\\(\\))|(do\\(\\))");
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(AdventOfCode2023Test.class.getResourceAsStream(inputSource))))) {
+            String line;
+            int acMulSum = 0;
+            boolean doIt = true;
+            while ((line = r.readLine()) != null) {
+                Matcher expressionMatcher = expressionPattern.matcher(line);
+                while (expressionMatcher.find()) {
+                    String expression = expressionMatcher.group();
+                    String operation = expression.replaceAll("\\(.*\\)", "");
+                    switch (operation.toLowerCase()) {
+                        case "mul":
+                            if (doIt) {
+                                String mulEx = expression
+                                        .replaceAll("mul\\(", "")
+                                        .replaceAll("\\)", "");
+                                Integer[] operands =
+                                        Arrays.stream(mulEx.split(",")).map(Integer::parseInt).toArray(Integer[]::new);
+                                acMulSum += operands[0] * operands[1];
+                            }
+                            break;
+                        case "do":
+                            doIt = true;
+                            break;
+                        case "don't":
+                            doIt = false;
+                            break;
+                        default:
+                            throw new UnsupportedOperationException("Operation not supported: " + operation);
+                    }
+                }
+            }
+            assertEquals(exMulSum, acMulSum);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Stream<Arguments> test_day3Part2() {
+        return Stream.of(
+                Arguments.of("/2024/day3-example2.txt", 48)
+                , Arguments.of("/2024/day3-input.txt", 74361272)
         );
     }
 }

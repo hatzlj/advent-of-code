@@ -1,6 +1,5 @@
 package com.outofmint;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -415,4 +414,52 @@ public class AdventOfCode2024Test {
                 Arguments.of("/2024/day4-input.txt", 1930)
         );
     }
+
+    @ParameterizedTest
+    @MethodSource
+    public void test_day5Part1(final String inputSource, final int exChecksum) {
+        AtomicInteger acChecksum = new AtomicInteger(0);
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(AdventOfCode2024Test.class.getResourceAsStream(inputSource))))) {
+            String line;
+            final Map<String, List<String>> rules = new HashMap<>();
+            final List<String> updates = new ArrayList<>();
+
+            while ((line = r.readLine()) != null && !line.isEmpty()) {
+                String[] ruleParts = line.split("\\|");
+                rules.computeIfAbsent(ruleParts[0], k -> new ArrayList<>()).add(ruleParts[1]);
+            }
+            while ((line = r.readLine()) != null) {
+                updates.add(line);
+            }
+
+
+            final ExecutorService executorService = Executors.newFixedThreadPool(8);
+            final List<CompletableFuture<Void>> futures = new ArrayList<>();
+            for (String update : updates) {
+                final List<String> updatePages = List.of(update.split(","));
+                List<String> applicableRules = rules.keySet().stream().filter(updatePages::contains).toList();
+                boolean valid = applicableRules.stream().allMatch(rule ->
+                        rules.get(rule).stream()
+                                .filter(updatePages::contains)
+                                .allMatch(subsequentPage -> update.indexOf(rule) < update.indexOf(subsequentPage)));
+                if (valid) {
+                    acChecksum.addAndGet(Integer.parseInt(updatePages.get((updatePages.size() / 2))));
+                }
+            }
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            executorService.shutdown();
+            assertEquals(exChecksum, acChecksum.get());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Stream<Arguments> test_day5Part1() {
+        return Stream.of(
+                Arguments.of("/2024/day5-example.txt", 143),
+                Arguments.of("/2024/day5-input.txt", 5713)
+        );
+    }
+
 }

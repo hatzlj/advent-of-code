@@ -362,4 +362,57 @@ public class AdventOfCode2024Test {
                 Arguments.of("/2024/day4-input.txt", 2543)
         );
     }
+
+    @ParameterizedTest
+    @MethodSource
+    public void test_day4Part2(final String inputSource, final int exXmasCount) {
+        AtomicInteger acXmasCount = new AtomicInteger(0);
+        final String searchString = "mas";
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(AdventOfCode2024Test.class.getResourceAsStream(inputSource))))) {
+            String line;
+            final List<List<Character>> input = new ArrayList<>();
+            while ((line = r.readLine()) != null) {
+                input.add(line.toLowerCase().chars().mapToObj(c -> (char) c).collect(Collectors.toUnmodifiableList()));
+            }
+            final ExecutorService executorService = Executors.newFixedThreadPool(8);
+            final List<CompletableFuture<Void>> futures = new ArrayList<>();
+            // we can skip row 0 and the last row for searching for 'a'
+            for (int row = 1; row < input.size() - 1; row++) {
+                for (int col = 0; col < input.get(row).size(); col++) {
+                    if (input.get(row).get(col) == searchString.charAt(1)) {
+                        printInput(input, row, col, ANSI_YELLOW_BG);
+                        final int curR = row;
+                        final int curC = col;
+                        futures.add(CompletableFuture.runAsync(() ->
+                                        acXmasCount.getAndUpdate(c -> c +
+                                                (((findAdjacent(input, curR - 1, curC - 1, searchString, 1, 1)
+                                                        || findAdjacent(input, curR + 1, curC + 1, searchString, -1,
+                                                        -1))
+                                                        && (findAdjacent(input, curR + 1, curC - 1, searchString, -1,
+                                                        1)
+                                                        || findAdjacent(input, curR - 1, curC + 1, searchString, 1,
+                                                        -1))) ? 1 : 0)),
+                                executorService));
+                    } else {
+                        printInput(input, row, col, ANSI_RED_BG);
+                    }
+                }
+            }
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            executorService.shutdown();
+            assertEquals(exXmasCount, acXmasCount.get());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Stream<Arguments> test_day4Part2() {
+        return Stream.of(
+                Arguments.of("/2024/day4-example.txt", 9),
+                Arguments.of("/2024/day4-example3.txt", 1),
+                Arguments.of("/2024/day4-example4.txt", 9),
+                Arguments.of("/2024/day4-input.txt", 1930)
+        );
+    }
 }
